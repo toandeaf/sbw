@@ -1,85 +1,13 @@
-package example
+package main
 
 import rl "vendor:raylib"
 
-INTERVAL : f32 = 2.0
-SPEED : f32 = 1.2
+import p "player"
+import t "types"
+
 FRAME_TIME : f32 = 0.05
 
-GameObject :: struct {
-    position: rl.Vector2,
-    update: proc(obj: ^GameObject, dt: f32),
-}
-
-SpriteSheetAnimation :: struct {
-    texture     : rl.Texture2D,
-    frameWidth  : i32,
-    frameHeight : i32,
-    frameCount  : i32,
-    frameTime   : f32,
-    currentFrame: i32,
-    currentRow  : i32,
-    timer       : f32,
-    rotation    : f32,
-}
-
-update_sprite_index :: proc(anim: ^SpriteSheetAnimation) {
-    deltaTime := rl.GetFrameTime()
-
-    anim.timer += deltaTime
-
-    if anim.timer >= anim.frameTime {
-        anim.timer -= anim.frameTime
-        anim.currentFrame = (anim.currentFrame + 1) % anim.frameCount
-    }
-}
-
-evaluate_input_and_update_animation :: proc(anim: ^SpriteSheetAnimation, position: ^rl.Vector2) {
-    moving := true
-
-    if rl.IsKeyDown(rl.KeyboardKey.W) {
-        anim.currentRow = 0
-        position.y -= SPEED
-    } else if rl.IsKeyDown(rl.KeyboardKey.S) {
-        anim.currentRow = 1
-        position.y += SPEED
-    } else if rl.IsKeyDown(rl.KeyboardKey.A) {
-        anim.currentRow = 2
-        position.x -= SPEED
-    } else if rl.IsKeyDown(rl.KeyboardKey.D) {
-        anim.currentRow = 3
-        position.x += SPEED
-    } else {
-        moving = false
-    }
-
-    if moving {
-        update_sprite_index(anim)
-    } else {
-        anim.currentFrame = 0
-    }
-}
-
-draw_sprite_animation :: proc(anim: ^SpriteSheetAnimation, position: ^rl.Vector2) {
-    sourceRec := rl.Rectangle{
-        x      = cast(f32)(anim.currentFrame * anim.frameWidth),
-        y      = cast(f32)(anim.currentRow * anim.frameHeight),
-        width  = cast(f32)anim.frameWidth,
-        height = cast(f32)anim.frameHeight,
-    }
-    destRec := rl.Rectangle{
-        x      = position.x,
-        y      = position.y,
-        width  = cast(f32)anim.frameWidth,
-        height = cast(f32)anim.frameHeight,
-    }
-
-    origin := rl.Vector2{
-        cast(f32)anim.frameWidth / 2, cast(f32)anim.frameHeight / 2,
-    }
-
-    rl.DrawTexturePro(anim.texture, sourceRec, destRec, origin, 0.0, rl.WHITE)
-}
+global_camera: rl.Camera2D
 
 main :: proc() {
     screenWidth : i32 = 800
@@ -96,7 +24,7 @@ main :: proc() {
     spriteSheet := rl.LoadTexture("assets/walk.png")
     defer rl.UnloadTexture(spriteSheet)
 
-    anim := SpriteSheetAnimation{
+    animation := t.SpriteSheetAnimation{
         texture      = spriteSheet,
         frameWidth   = spriteSheet.width / 9,
         frameHeight  = spriteSheet.height / 4,
@@ -109,32 +37,66 @@ main :: proc() {
 
     position := rl.Vector2{ halfWidth, halfHeight }
 
-    camera2d := rl.Camera2D{
-        target  = rl.Vector2{ halfWidth, halfHeight },
-        offset  = rl.Vector2{ halfWidth, halfHeight },
+    global_camera := rl.Camera2D{
+        target  = position,
+        offset  = position,
         rotation= 0.0,
         zoom    = 1.0,
+    }
+
+    gameObjects := []t.GameObject{
+        t.GameObject{
+            position = position,
+            animation = animation,
+            update = p.update,
+        },
     }
 
     for !rl.WindowShouldClose() {
         deltaTime := rl.GetFrameTime()
 
-        // Evaluate input and update animation
-        evaluate_input_and_update_animation(&anim, &position)
+        for &gameObject in gameObjects {
+            gameObject.update(&gameObject, deltaTime)
+        }
 
-        // Render scene
         rl.BeginDrawing()
         defer rl.EndDrawing()
 
-        rl.BeginMode2D(camera2d)
+        rl.BeginMode2D(global_camera)
         defer rl.EndMode2D()
 
         rl.ClearBackground(rl.BLACK)
         rl.DrawText("Sand, blood, water.", 100, 200, 20, rl.GOLD)
 
-        draw_sprite_animation(&anim, &position)
+        for &gameObject in &gameObjects {
+            draw_sprite_animation(&gameObject)
+        }
 
-        // Update camera position
-        camera2d.target = rl.Vector2{ position.x, position.y }
+        global_camera.target = gameObjects[0].position
     }
+}
+
+draw_sprite_animation :: proc(obj: ^t.GameObject) {
+    anim := &obj.animation
+    position := obj.position
+
+    sourceRec := rl.Rectangle{
+        x      = cast(f32)(anim.currentFrame * anim.frameWidth),
+        y      = cast(f32)(anim.currentRow * anim.frameHeight),
+        width  = cast(f32)anim.frameWidth,
+        height = cast(f32)anim.frameHeight,
+    }
+
+    destRec := rl.Rectangle{
+        x      = position.x,
+        y      = position.y,
+        width  = cast(f32)anim.frameWidth,
+        height = cast(f32)anim.frameHeight,
+    }
+
+    origin := rl.Vector2{
+        cast(f32)anim.frameWidth / 2, cast(f32)anim.frameHeight / 2,
+    }
+
+    rl.DrawTexturePro(anim.texture, sourceRec, destRec, origin, 0.0, rl.WHITE)
 }
