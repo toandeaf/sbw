@@ -8,7 +8,6 @@ import c "camera"
 
 FRAME_TIME : f32 = 0.05
 
-
 main :: proc() {
     screenWidth : i32 = 800
     screenHeight : i32 = 400
