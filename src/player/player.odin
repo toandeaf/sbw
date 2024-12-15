@@ -3,6 +3,7 @@ package player
 import rl "vendor:raylib"
 
 import t "../types"
+import c "../camera"
 
 INTERVAL : f32 = 2.0
 SPEED : f32 = 1.2
@@ -35,6 +36,8 @@ evaluate_input_and_update_animation :: proc(anim: ^t.SpriteSheetAnimation, posit
     } else {
         anim.currentFrame = 0
     }
+
+    c.global_camera.target = position^
 }
 
 update_sprite_index :: proc(anim: ^t.SpriteSheetAnimation) {

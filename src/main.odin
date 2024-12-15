@@ -4,10 +4,10 @@ import rl "vendor:raylib"
 
 import p "player"
 import t "types"
+import c "camera"
 
 FRAME_TIME : f32 = 0.05
 
-global_camera: rl.Camera2D
 
 main :: proc() {
     screenWidth : i32 = 800
@@ -37,12 +37,7 @@ main :: proc() {
 
     position := rl.Vector2{ halfWidth, halfHeight }
 
-    global_camera := rl.Camera2D{
-        target  = position,
-        offset  = position,
-        rotation= 0.0,
-        zoom    = 1.0,
-    }
+    c.camera_init(position)
 
     gameObjects := []t.GameObject{
         t.GameObject{
@@ -62,7 +57,7 @@ main :: proc() {
         rl.BeginDrawing()
         defer rl.EndDrawing()
 
-        rl.BeginMode2D(global_camera)
+        rl.BeginMode2D(c.global_camera)
         defer rl.EndMode2D()
 
         rl.ClearBackground(rl.BLACK)
@@ -71,8 +66,6 @@ main :: proc() {
         for &gameObject in &gameObjects {
             draw_sprite_animation(&gameObject)
         }
-
-        global_camera.target = gameObjects[0].position
     }
 }
 
