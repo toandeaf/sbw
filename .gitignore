@@ -1,3 +1,7 @@
 .idea
 bin
 *.bin
+
+# Added by cargo
+
+/target
