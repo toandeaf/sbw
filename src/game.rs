@@ -35,7 +35,9 @@ impl Game {
 
     pub fn init(&mut self) {
         self.rl.set_target_fps(60);
+
         let player = Player::init(self);
+
         self.game_objects.push(Box::new(player));
     }
 
