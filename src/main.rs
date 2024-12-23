@@ -1,20 +1,15 @@
 mod player;
 
-use crate::player::player_update;
-use raylib::color::Color;
-use raylib::ffi::DrawTexturePro;
-use raylib::prelude::{Camera2D, RaylibDraw, Rectangle, Vector2};
+use crate::player::Player;
+use raylib::drawing::RaylibDrawHandle;
+use raylib::prelude::{Camera2D, Color, RaylibDraw, RaylibMode2DExt, Vector2};
 use raylib::{prelude as rl, RaylibHandle, RaylibThread};
-use std::ops::Deref;
 
 const FRAME_TIME: f32 = 0.05;
-const INTERVAL: f32 = 2.0;
-const SPEED: f32 = 1.2;
 
-struct GameObject {
-    position: Vector2,
-    animation: SpriteSheetAnimation,
-    update: fn(rl: &RaylibHandle, game_object: &mut GameObject),
+trait GameObject {
+    fn update(&mut self, rl: &RaylibHandle);
+    fn render(&mut self, rld: &mut RaylibDrawHandle);
 }
 
 struct SpriteSheetAnimation {
@@ -32,8 +27,7 @@ struct SpriteSheetAnimation {
 struct Game {
     rl: RaylibHandle,
     thread: RaylibThread,
-    pub camera: Camera2D,
-    game_objects: Vec<GameObject>,
+    game_objects: Vec<Box<dyn GameObject>>,
 }
 
 impl Game {
@@ -42,17 +36,9 @@ impl Game {
         rlb.height(400).width(800).title("Sand, blood, water.");
         let (rl, thread) = rlb.build();
 
-        let camera: Camera2D = Camera2D {
-            offset: Vector2 { x: 0.0, y: 0.0 },
-            target: Vector2 { x: 0.0, y: 0.0 },
-            rotation: 0.0,
-            zoom: 1.0,
-        };
-
         Self {
             rl,
             thread,
-            camera,
             game_objects: vec![],
         }
     }
@@ -88,72 +74,33 @@ impl Game {
             y: half_height,
         };
 
-        self.camera.target = position;
-        self.camera.offset = position;
-
-        self.game_objects.push(GameObject {
+        let player = Player {
             position,
             animation,
-            update: player_update,
-        });
+        };
+
+        self.game_objects.push(Box::new(player));
     }
 
     fn run(&mut self) {
         while !self.rl.window_should_close() {
-            for mut game_object in self.game_objects.iter_mut() {
-                (game_object.update)(&self.rl, game_object);
+            for game_object in self.game_objects.iter_mut() {
+                game_object.update(&self.rl);
             }
 
             let mut d = self.rl.begin_drawing(&self.thread);
-
             d.clear_background(Color::BLACK);
             d.draw_text("Sand, blood, water.", 100, 200, 20, Color::GOLD);
 
-            for game_object in &self.game_objects {
-                draw_sprite_animation(&game_object);
+            for game_object in &mut self.game_objects.iter_mut() {
+                game_object.render(&mut d);
             }
         }
     }
 }
 
-
 fn main() {
     let mut game = Game::new();
     game.init();
     game.run();
-}
-
-fn draw_sprite_animation(obj: &GameObject) {
-    let anim = &obj.animation;
-    let position = obj.position;
-
-    let source_rec = Rectangle {
-        x: (anim.current_frame * anim.frame_width) as f32,
-        y: (anim.current_row * anim.frame_height) as f32,
-        width: anim.frame_width as f32,
-        height: anim.frame_height as f32,
-    };
-
-    let dest_rec = Rectangle {
-        x: position.x,
-        y: position.y,
-        width: anim.frame_width as f32,
-        height: anim.frame_height as f32,
-    };
-
-    let origin = Vector2 {
-        x: (anim.frame_width / 2) as f32,
-        y: (anim.frame_height / 2) as f32,
-    };
-
-    unsafe {
-        DrawTexturePro(
-            *anim.texture,
-            source_rec.into(),
-            dest_rec.into(),
-            origin.into(),
-            0.0,
-            Color::WHITE.into(),
-        )
-    }
 }

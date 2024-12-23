@@ -1,49 +1,88 @@
-use crate::{GameObject, SpriteSheetAnimation};
-use raylib::prelude::{KeyboardKey, Vector2};
+use crate::{Game, GameObject, SpriteSheetAnimation};
+use raylib::drawing::RaylibDrawHandle;
+use raylib::prelude::{Color, KeyboardKey, RaylibDraw, RaylibMode2DExt, Rectangle, Vector2};
 use raylib::RaylibHandle;
 
 const FRAME_TIME: f32 = 0.05;
-const INTERVAL: f32 = 2.0;
 const SPEED: f32 = 1.2;
 
-pub fn player_update(rl: &RaylibHandle, obj: &mut GameObject) {
-    evaluate_input_and_update_animation(rl, &mut obj.animation, &mut obj.position)
+pub struct Player {
+    pub position: Vector2,
+    pub animation: SpriteSheetAnimation,
 }
 
-fn evaluate_input_and_update_animation(
-    rl: &RaylibHandle,
-    anim: &mut SpriteSheetAnimation,
-    position: &mut Vector2,
-) {
-    let mut moving = true;
-    let running = rl.is_key_down(KeyboardKey::KEY_LEFT_SHIFT);
+impl GameObject for Player {
+    fn update(&mut self, rl: &RaylibHandle) {
+        let position = &mut self.position;
+        let anim = &mut self.animation;
 
-    let mut prospective_speed = SPEED;
+        let mut moving = true;
+        let running = rl.is_key_down(KeyboardKey::KEY_LEFT_SHIFT);
 
-    if running {
-        prospective_speed = SPEED * 2.0
+        let mut prospective_speed = SPEED;
+
+        if running {
+            prospective_speed = SPEED * 2.0
+        }
+
+        if rl.is_key_down(KeyboardKey::KEY_W) {
+            anim.current_row = 0;
+            position.y -= prospective_speed
+        } else if rl.is_key_down(KeyboardKey::KEY_S) {
+            anim.current_row = 1;
+            position.y += prospective_speed
+        } else if rl.is_key_down(KeyboardKey::KEY_A) {
+            anim.current_row = 2;
+            position.x -= prospective_speed
+        } else if rl.is_key_down(KeyboardKey::KEY_D) {
+            anim.current_row = 3;
+            position.x += prospective_speed
+        } else {
+            moving = false
+        }
+
+        // game.camera.target = *position;
+
+        if moving {
+            update_sprite_index(rl, anim, running)
+        } else {
+            anim.current_frame = 0
+        }
     }
 
-    if rl.is_key_down(KeyboardKey::KEY_W) {
-        anim.current_row = 0;
-        position.y -= prospective_speed
-    } else if rl.is_key_down(KeyboardKey::KEY_S) {
-        anim.current_row = 1;
-        position.y += prospective_speed
-    } else if rl.is_key_down(KeyboardKey::KEY_A) {
-        anim.current_row = 2;
-        position.x -= prospective_speed
-    } else if rl.is_key_down(KeyboardKey::KEY_D) {
-        anim.current_row = 3;
-        position.x += prospective_speed
-    } else {
-        moving = false
-    }
+    fn render(&mut self, rld: &mut RaylibDrawHandle) {
+        let anim = &self.animation;
+        let position = self.position;
 
-    if moving {
-        update_sprite_index(rl, anim, running)
-    } else {
-        anim.current_frame = 0
+        let source_rec = Rectangle {
+            x: (anim.current_frame * anim.frame_width) as f32,
+            y: (anim.current_row * anim.frame_height) as f32,
+            width: anim.frame_width as f32,
+            height: anim.frame_height as f32,
+        };
+
+        let dest_rec = Rectangle {
+            x: position.x,
+            y: position.y,
+            width: anim.frame_width as f32,
+            height: anim.frame_height as f32,
+        };
+
+        let origin = Vector2 {
+            x: (anim.frame_width / 2) as f32,
+            y: (anim.frame_height / 2) as f32,
+        };
+
+        // game.camera.target = position;
+
+        rld.draw_texture_pro(
+            &anim.texture,
+            source_rec,
+            dest_rec,
+            origin,
+            anim.rotation,
+            Color::WHITE,
+        );
     }
 }
 
