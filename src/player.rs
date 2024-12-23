@@ -1,12 +1,17 @@
-use crate::{GameObject, SpriteSheetAnimation};
+use crate::game::{Game, GameObject, SCREEN_HEIGHT, SCREEN_WIDTH};
+use crate::sprite_sheet::{update_movement_sprite_index, SpriteSheetAnimation, FRAME_TIME};
 use raylib::drawing::RaylibDrawHandle;
-use raylib::prelude::{Color, KeyboardKey, RaylibDraw, Rectangle, Vector2};
+use raylib::prelude::{
+    Camera2D, Color, KeyboardKey, RaylibDraw, RaylibMode2DExt, Rectangle, Vector2,
+};
 use raylib::RaylibHandle;
 
-const FRAME_TIME: f32 = 0.05;
 const SPEED: f32 = 1.2;
+const SHEET_COLUMNS: i32 = 9;
+const SHEET_ROWS: i32 = 4;
 
 pub struct Player {
+    pub camera: Camera2D,
     pub position: Vector2,
     pub animation: SpriteSheetAnimation,
 }
@@ -15,39 +20,38 @@ impl GameObject for Player {
     fn update(&mut self, rl: &RaylibHandle) {
         let position = &mut self.position;
         let anim = &mut self.animation;
+        let camera = &mut self.camera;
 
         let mut moving = true;
-        let running = rl.is_key_down(KeyboardKey::KEY_LEFT_SHIFT);
 
-        let mut prospective_speed = SPEED;
-
-        if running {
-            prospective_speed = SPEED * 2.0
-        }
+        let (speed, running) = match rl.is_key_down(KeyboardKey::KEY_LEFT_SHIFT) {
+            true => (SPEED * 2.0, true),
+            false => (SPEED, false),
+        };
 
         if rl.is_key_down(KeyboardKey::KEY_W) {
             anim.current_row = 0;
-            position.y -= prospective_speed
+            position.y -= speed
         } else if rl.is_key_down(KeyboardKey::KEY_S) {
             anim.current_row = 1;
-            position.y += prospective_speed
+            position.y += speed
         } else if rl.is_key_down(KeyboardKey::KEY_A) {
             anim.current_row = 2;
-            position.x -= prospective_speed
+            position.x -= speed
         } else if rl.is_key_down(KeyboardKey::KEY_D) {
             anim.current_row = 3;
-            position.x += prospective_speed
+            position.x += speed
         } else {
             moving = false
         }
 
-        // game.camera.target = *position;
-
         if moving {
-            update_sprite_index(rl, anim, running)
+            update_movement_sprite_index(rl, anim, running);
         } else {
             anim.current_frame = 0
         }
+
+        camera.target = self.position;
     }
 
     fn render(&mut self, rld: &mut RaylibDrawHandle) {
@@ -73,9 +77,12 @@ impl GameObject for Player {
             y: (anim.frame_height / 2) as f32,
         };
 
-        // game.camera.target = position;
+        let mut rl = rld.begin_mode2D(self.camera);
+        // TODO - This is a hack to clear the screen, we should have a better way to do this
+        rl.clear_background(Color::KHAKI);
+        rl.draw_text("Sand, blood, water.", 100, 200, 20, Color::BLUE);
 
-        rld.draw_texture_pro(
+        rl.draw_texture_pro(
             &anim.texture,
             source_rec,
             dest_rec,
@@ -86,19 +93,46 @@ impl GameObject for Player {
     }
 }
 
-fn update_sprite_index(rl: &RaylibHandle, anim: &mut SpriteSheetAnimation, running: bool) {
-    let delta_time = rl.get_frame_time();
+impl Player {
+    pub fn init(game: &mut Game) -> Self {
+        let half_width: f32 = SCREEN_WIDTH as f32 / 2.0;
+        let half_height: f32 = SCREEN_HEIGHT as f32 / 2.0;
 
-    if running {
-        anim.frame_time = anim.frame_time / 1.5
-    } else {
-        anim.frame_time = FRAME_TIME
-    }
+        let texture =
+            game.rl
+            .load_texture(&game.thread, "assets/walk.png")
+            .unwrap();
 
-    anim.timer += delta_time;
+        let animation = SpriteSheetAnimation {
+            frame_width: texture.width / SHEET_COLUMNS,
+            frame_height: texture.height / SHEET_ROWS,
+            texture,
+            frame_count: SHEET_COLUMNS,
+            frame_time: FRAME_TIME,
+            current_frame: 0,
+            current_row: 1,
+            timer: 0.0,
+            rotation: 0.0,
+        };
 
-    if anim.timer >= anim.frame_time {
-        anim.timer -= anim.frame_time;
-        anim.current_frame = (anim.current_frame + 1) % anim.frame_count;
+        let position = Vector2 {
+            x: half_width,
+            y: half_height,
+        };
+
+        let camera = Camera2D {
+            offset: position,
+            target: position,
+            rotation: 0.0,
+            zoom: 1.0,
+        };
+
+        Player {
+            camera,
+            position,
+            animation,
+        }
     }
 }
+
+
