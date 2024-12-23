@@ -2,7 +2,7 @@ mod player;
 
 use crate::player::Player;
 use raylib::drawing::RaylibDrawHandle;
-use raylib::prelude::{Camera2D, Color, RaylibDraw, RaylibMode2DExt, Vector2};
+use raylib::prelude::{Color, RaylibDraw, Vector2};
 use raylib::{prelude as rl, RaylibHandle, RaylibThread};
 
 const FRAME_TIME: f32 = 0.05;

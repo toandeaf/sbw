@@ -1,6 +1,6 @@
-use crate::{Game, GameObject, SpriteSheetAnimation};
+use crate::{GameObject, SpriteSheetAnimation};
 use raylib::drawing::RaylibDrawHandle;
-use raylib::prelude::{Color, KeyboardKey, RaylibDraw, RaylibMode2DExt, Rectangle, Vector2};
+use raylib::prelude::{Color, KeyboardKey, RaylibDraw, Rectangle, Vector2};
 use raylib::RaylibHandle;
 
 const FRAME_TIME: f32 = 0.05;
