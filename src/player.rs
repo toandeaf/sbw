@@ -54,7 +54,7 @@ impl GameObject for Player {
         camera.target = self.position;
     }
 
-    fn render(&mut self, rld: &mut RaylibDrawHandle) {
+    fn render(&mut self, draw_handle: &mut RaylibDrawHandle) {
         let anim = &self.animation;
         let position = self.position;
 
@@ -77,12 +77,12 @@ impl GameObject for Player {
             y: (anim.frame_height / 2) as f32,
         };
 
-        let mut rl = rld.begin_mode2D(self.camera);
+        let mut draw_handle_2d = draw_handle.begin_mode2D(self.camera);
         // TODO - This is a hack to clear the screen, we should have a better way to do this
-        rl.clear_background(Color::KHAKI);
-        rl.draw_text("Sand, blood, water.", 100, 200, 20, Color::BLUE);
+        draw_handle_2d.clear_background(Color::KHAKI);
+        draw_handle_2d.draw_text("Sand, blood, water.", 100, 200, 20, Color::BLUE);
 
-        rl.draw_texture_pro(
+        draw_handle_2d.draw_texture_pro(
             &anim.texture,
             source_rec,
             dest_rec,

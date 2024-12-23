@@ -47,10 +47,10 @@ impl Game {
                 game_object.update(&self.rl);
             }
 
-            let mut d = self.rl.begin_drawing(&self.thread);
+            let mut draw_handle = self.rl.begin_drawing(&self.thread);
 
             for game_object in &mut self.game_objects.iter_mut() {
-                game_object.render(&mut d);
+                game_object.render(&mut draw_handle);
             }
         }
     }
