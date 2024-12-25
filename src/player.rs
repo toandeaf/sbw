@@ -1,4 +1,4 @@
-use crate::game::{Game, GameObject, SCREEN_HEIGHT, SCREEN_WIDTH};
+use crate::game::{Game, GameObject};
 use crate::sprite_sheet::{update_movement_sprite_index, SpriteSheetAnimation, FRAME_TIME};
 use raylib::drawing::{RaylibDrawHandle, RaylibMode2D};
 use raylib::prelude::{
@@ -11,7 +11,6 @@ const SHEET_COLUMNS: i32 = 9;
 const SHEET_ROWS: i32 = 4;
 
 pub struct Player {
-    pub camera: Camera2D,
     pub position: Vector2,
     pub animation: SpriteSheetAnimation,
 }
@@ -40,15 +39,7 @@ impl Player {
             y: 0.,
         };
 
-        let camera = Camera2D {
-            offset: position,
-            target: position,
-            rotation: 0.0,
-            zoom: 1.0,
-        };
-
         Player {
-            camera,
             position,
             animation,
         }
