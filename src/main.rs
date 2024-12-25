@@ -1,6 +1,7 @@
 mod player;
 mod game;
 mod sprite_sheet;
+mod map;
 
 use crate::game::Game;
 
