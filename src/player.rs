@@ -124,10 +124,6 @@ impl GameObject for Player {
             Color::WHITE,
         );
 
-        camera.offset = Vector2 {
-            x: (SCREEN_WIDTH / 2) as f32,
-            y: (SCREEN_HEIGHT / 2) as f32,
-        };
         camera.target = position;
     }
 }

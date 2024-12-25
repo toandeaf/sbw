@@ -38,7 +38,7 @@ impl GameObject for Map {
 
     fn render(&mut self, rld: &mut RaylibMode2D<RaylibDrawHandle>, camera: &mut Camera2D) {
         let tiles = &self.tile_map.tiles;
-        let render_distance = TILE_SIZE * 1.0; // Adjust this value as needed
+        let render_distance = TILE_SIZE * 10.0; // Adjust this value as needed
 
         for (y, row) in tiles.iter().enumerate() {
             for (x, tile) in row.iter().enumerate() {

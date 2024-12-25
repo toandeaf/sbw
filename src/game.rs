@@ -30,7 +30,10 @@ impl Game {
         let (rl, thread) = rlb.build();
 
         let camera2d = Camera2D {
-            offset: Vector2 { x: 0.0, y: 0.0 },
+            offset: Vector2 {
+                x: (SCREEN_WIDTH / 2) as f32,
+                y: (SCREEN_HEIGHT / 2) as f32,
+            },
             target: Vector2 { x: 0.0, y: 0.0 }.into(),
             rotation: 0.0,
             zoom: 1.0,
