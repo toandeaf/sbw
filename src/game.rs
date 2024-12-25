@@ -5,11 +5,11 @@ use raylib::prelude::{Camera2D, Color, RaylibDraw, RaylibMode2D, RaylibMode2DExt
 use raylib::{init, RaylibHandle, RaylibThread};
 
 pub const SCREEN_WIDTH: i32 = 800;
-pub const SCREEN_HEIGHT: i32 = 400;
+pub const SCREEN_HEIGHT: i32 = 500;
 
 pub trait GameObject {
-    fn update(&mut self, rl: &mut RaylibHandle);
-    fn render(&mut self, rld: &mut RaylibMode2D<RaylibDrawHandle>, camera2d: &mut Camera2D);
+    fn update(&mut self, rl: &mut RaylibHandle, camera2d: &mut Camera2D);
+    fn render(&mut self, rld: &mut RaylibMode2D<RaylibDrawHandle>, camera2d: &Camera2D);
 }
 
 pub struct Game {
@@ -60,7 +60,7 @@ impl Game {
     pub fn run(&mut self) {
         while !self.rl.window_should_close() {
             for game_object in self.game_objects.iter_mut() {
-                game_object.update(&mut self.rl);
+                game_object.update(&mut self.rl, &mut self.camera2d);
             }
 
             let mut draw = self.rl.begin_drawing(&self.thread);
@@ -68,7 +68,7 @@ impl Game {
             draw_2d.clear_background(Color::KHAKI);
 
             for game_object in self.game_objects.iter_mut() {
-                game_object.render(&mut draw_2d, &mut self.camera2d);
+                game_object.render(&mut draw_2d, &self.camera2d);
             }
         }
     }

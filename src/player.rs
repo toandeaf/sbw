@@ -47,7 +47,7 @@ impl Player {
 }
 
 impl GameObject for Player {
-    fn update(&mut self, rl: &mut RaylibHandle) {
+    fn update(&mut self, rl: &mut RaylibHandle, camera: &mut Camera2D) {
         let position = &mut self.position;
         let anim = &mut self.animation;
 
@@ -79,9 +79,11 @@ impl GameObject for Player {
         } else {
             anim.current_frame = 0
         }
+
+        camera.target = *position;
     }
 
-    fn render(&mut self, draw_handle: &mut RaylibMode2D<RaylibDrawHandle>, camera: &mut Camera2D) {
+    fn render(&mut self, draw_handle: &mut RaylibMode2D<RaylibDrawHandle>, _: &Camera2D) {
         let anim = &self.animation;
         let position = self.position;
 
@@ -104,8 +106,6 @@ impl GameObject for Player {
             y: (anim.frame_height / 2) as f32,
         };
 
-        // TODO - This is a hack to clear the screen, we should have a better way to do this
-
         draw_handle.draw_texture_pro(
             &anim.texture,
             source_rec,
@@ -114,7 +114,5 @@ impl GameObject for Player {
             anim.rotation,
             Color::WHITE,
         );
-
-        camera.target = position;
     }
 }
