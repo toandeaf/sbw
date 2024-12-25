@@ -63,6 +63,7 @@ impl GameObject for Map {
                     y: dest_rec.y / 2.,
                 };
 
+                // TODO fix this offset malarky - player/camera is slightly left from where expected.
                 let distance_to_origin = origin.distance_to(camera.target);
                 if distance_to_origin >= RENDER_DISTANCE {
                     continue;
