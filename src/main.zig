@@ -22,7 +22,7 @@ const Player = struct {
     animation: SpriteSheetAnimation,
 
     pub fn update(self: *Player) void {
-       var moving = true;
+        var moving = true;
 
         const speed = 1.2;
 
@@ -61,7 +61,7 @@ const Player = struct {
     pub fn render(self: Player) void {
         const source_rec = rl.Rectangle.init(
             self.animation.frameWidth * @as(f32, @floatFromInt(self.animation.currentFrame)),
-            self.animation.frameHeight *  @as(f32, @floatFromInt(self.animation.currentRow)),
+            self.animation.frameHeight * @as(f32, @floatFromInt(self.animation.currentRow)),
             self.animation.frameWidth,
             self.animation.frameHeight,
         );
