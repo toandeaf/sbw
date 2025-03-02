@@ -1,11 +1,15 @@
 const rl = @import("raylib");
 const std = @import("std");
-const alloactor = std.heap.page_allocator;
 const ss = @import("sprite_sheet.zig");
-const Player = @import("player.zig").Player;
+const p = @import("player.zig");
 const c = @import("camera.zig");
+const m = @import("map.zig");
 
-var game_objects: std.ArrayList = undefined;
+const GameObject = struct {
+    updateFn: fn (self: anytype) void,
+    renderFn: fn (self: anytype) void,
+    data: ?*anyopaque,
+};
 
 pub fn main() anyerror!void {
     const screenWidth = 800;
@@ -13,12 +17,13 @@ pub fn main() anyerror!void {
 
     c.initCamera(screenWidth, screenHeight);
 
-    rl.initWindow(screenWidth, screenHeight, "raylib-zig [core] example - basic window");
+    rl.initWindow(screenWidth, screenHeight, "SBW Zig POC");
     defer rl.closeWindow();
 
     rl.setTargetFPS(60);
 
-    var player = Player.init();
+    var player = p.Player.init();
+    const map = m.Map.init();
 
     while (!rl.windowShouldClose()) {
         rl.beginDrawing();
@@ -29,6 +34,7 @@ pub fn main() anyerror!void {
         rl.beginMode2D(c.camera);
         defer rl.endMode2D();
 
+        map.render();
         player.render();
 
         rl.clearBackground(rl.Color.init(240, 230, 140, 255));

@@ -2,6 +2,10 @@ const rl = @import("raylib");
 const ss = @import("sprite_sheet.zig");
 const c = @import("camera.zig");
 
+const NUMBER_OF_FRAMES = 9;
+const NUMBER_OF_ROWS = 4;
+const FRAME_TIME = 0.05;
+
 pub const Player = struct {
     position: rl.Vector2,
     animation: ss.SpriteSheetAnimation,
@@ -9,22 +13,26 @@ pub const Player = struct {
     pub fn init() Player {
         const texture = rl.loadTexture("assets/walk.png");
 
-        const frameWidth: f32 = @floatFromInt(texture.width);
-        const frameHeight: f32 = @floatFromInt(texture.height);
+        const frameWidth = @as(f32, @floatFromInt(texture.width)) / NUMBER_OF_FRAMES;
+        const frameHeight = @as(f32, @floatFromInt(texture.height)) / NUMBER_OF_ROWS;
 
-        const divFrameWidth = frameWidth / 9;
-        const divFrameHeight = frameHeight / 4;
-        const player = Player{ .position = rl.Vector2.init(0, 0), .animation = ss.SpriteSheetAnimation{
+        const position = rl.Vector2.init(0, 0);
+        const animation = ss.SpriteSheetAnimation{
             .texture = texture,
-            .frameWidth = divFrameWidth,
-            .frameHeight = divFrameHeight,
-            .frameCount = 9,
-            .frameTime = 0.05,
+            .frameWidth = frameWidth,
+            .frameHeight = frameHeight,
+            .frameCount = NUMBER_OF_FRAMES,
+            .frameTime = FRAME_TIME,
             .currentFrame = 0,
             .currentRow = 1,
             .timer = 0.0,
             .rotation = 0.0,
-        } };
+        };
+
+        const player = Player{
+            .position = position,
+            .animation = animation,
+        };
 
         return player;
     }
@@ -57,7 +65,7 @@ pub const Player = struct {
 
             if (self.animation.timer >= self.animation.frameTime) {
                 self.animation.timer -= self.animation.frameTime;
-                self.animation.currentFrame += @rem(self.animation.currentFrame + 1, self.animation.frameCount);
+                self.animation.currentFrame = @rem(self.animation.currentFrame + 1, self.animation.frameCount);
             }
         } else {
             self.animation.currentFrame = 0;
@@ -69,7 +77,7 @@ pub const Player = struct {
     pub fn render(self: Player) void {
         const source_rec = rl.Rectangle.init(
             self.animation.frameWidth * @as(f32, @floatFromInt(self.animation.currentFrame)),
-            self.animation.frameHeight *  @as(f32, @floatFromInt(self.animation.currentRow)),
+            self.animation.frameHeight * @as(f32, @floatFromInt(self.animation.currentRow)),
             self.animation.frameWidth,
             self.animation.frameHeight,
         );
