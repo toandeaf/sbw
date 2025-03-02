@@ -8,8 +8,8 @@ pub fn build(b: *std.Build) !void {
     const raylib_dep = b.dependency("raylib-zig", .{
         .target = target,
         .optimize = optimize,
+        .raudio = false, // Disable built-in miniaudio in raylib
     });
-
     const raylib = raylib_dep.module("raylib");
     const raylib_artifact = raylib_dep.artifact("raylib");
 
@@ -35,6 +35,10 @@ pub fn build(b: *std.Build) !void {
     }
 
     const exe = b.addExecutable(.{ .name = "sbw", .root_source_file = b.path("src/main.zig"), .optimize = optimize, .target = target });
+
+    const zaudio = b.dependency("zaudio", .{});
+    exe.root_module.addImport("zaudio", zaudio.module("root"));
+    exe.linkLibrary(zaudio.artifact("miniaudio"));
 
     exe.linkLibrary(raylib_artifact);
     exe.root_module.addImport("raylib", raylib);
