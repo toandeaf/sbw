@@ -6,9 +6,15 @@ const c = @import("camera.zig");
 const m = @import("map.zig");
 
 const GameObject = struct {
-    updateFn: fn (self: anytype) void,
-    renderFn: fn (self: anytype) void,
-    data: ?*anyopaque,
+    updateFn: *const fn() void,
+    renderFn: *const fn() void,
+
+    pub fn update(self: GameObject) void {
+        self.updateFn();
+    }
+    pub fn render(self: GameObject) void {
+        self.renderFn();
+    }
 };
 
 pub fn main() anyerror!void {
@@ -22,20 +28,34 @@ pub fn main() anyerror!void {
 
     rl.setTargetFPS(60);
 
-    var player = p.Player.init();
-    const map = m.Map.init();
+    m.Map.init();
+    p.Player.init();
+
+    const gameObjects = [_]GameObject{
+        GameObject{
+            .updateFn = m.update,
+            .renderFn = m.render,
+        },
+        GameObject{
+            .updateFn = p.update,
+            .renderFn = p.render,
+        },
+    };
 
     while (!rl.windowShouldClose()) {
         rl.beginDrawing();
         defer rl.endDrawing();
 
-        player.update();
+        for (gameObjects) |gameObject| {
+            gameObject.update();
+        }
 
         rl.beginMode2D(c.camera);
         defer rl.endMode2D();
 
-        map.render();
-        player.render();
+        for (gameObjects) |gameObject| {
+            gameObject.render();
+        }
 
         rl.clearBackground(rl.Color.init(240, 230, 140, 255));
         rl.drawText("Sand, blood, water.", 50, 100, 20, rl.Color.red);
