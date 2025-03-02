@@ -15,15 +15,15 @@ const Tile = enum {
     Water,
     Sand,
     pub fn toRectangle(self: Tile) rl.Rectangle {
-        const sure = switch (self) {
+        const tuple = switch (self) {
             Tile.Sand => Tuple{ .x = 1.0, .y = 1.0 },
             Tile.Water => Tuple{ .x = 15.0, .y = 6.0 },
             Tile.Grass => Tuple{ .x = 18.0, .y = 6.0 },
         };
 
         return rl.Rectangle {
-            .x = sure.x * TILE_SIZE,
-            .y = sure.y * TILE_SIZE,
+            .x = tuple.x * TILE_SIZE,
+            .y = tuple.y * TILE_SIZE,
             .width = TILE_SIZE,
             .height = TILE_SIZE,
         };
