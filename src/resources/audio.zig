@@ -1,9 +1,14 @@
 const std = @import("std");
+const net = @import("std").net;
+const fs = @import("std").fs;
+
 const zaudio = @import("zaudio");
 
-const BUFFER_SIZE = 44100; // 1 second at 44.1kHz
+const n = @import("network.zig");
+const constants = @import("constants.zig");
 
-var audio_buffer: [BUFFER_SIZE]i16 = undefined;
+
+var audio_buffer: [constants.BUFFER_SIZE]i16 = undefined;
 var buffer_index: usize = 0;
 var audio_file: ?std.fs.File = null;
 
@@ -72,10 +77,15 @@ fn audioCallback(
             audio_buffer[buffer_index] = samples[i];
             buffer_index += 1;
 
-            if (buffer_index >= BUFFER_SIZE) {
-                if (audio_file) |*f| {
-                    // Eventually gonna replace this with writing to network.
-                    _ = f.write(std.mem.sliceAsBytes(&audio_buffer)) catch {};
+            if (buffer_index >= constants.BUFFER_SIZE) {
+                // if (audio_file) |*f| {
+                //     // Eventually gonna replace this with writing to network.
+                //     _ = f.write(std.mem.sliceAsBytes(&audio_buffer)) catch {};
+                // }
+                if (n.conn != null) {
+                    n.writeToServer(audio_buffer) catch |err| {
+                        std.debug.print("Error writing to server: {}\n", .{err});
+                    };
                 }
                 buffer_index = 0; // Reset buffer
             }

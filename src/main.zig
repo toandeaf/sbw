@@ -7,6 +7,7 @@ const m = @import("map/index.zig");
 const p = @import("player/index.zig");
 const c = @import("resources/camera.zig");
 const a = @import("resources/audio.zig");
+const n = @import("resources/network.zig");
 
 pub fn main() anyerror!void {
     const screenWidth = 800;
@@ -31,6 +32,7 @@ pub fn main() anyerror!void {
     };
 
     // Trigger this on action orrr?
+    try n.Init();
     try a.Listen();
 
     while (!rl.windowShouldClose()) {
