@@ -1,25 +1,37 @@
 const std = @import("std");
-const net = std.net;
+const audio = @import("../src/resources/audio.zig");
 
 pub fn main() !void {
-    const page_allocator = std.heap.page_allocator;
+    const loopback = try std.net.Ip4Address.parse("127.0.0.1", 9001);
+    const localhost = std.net.Address{ .in = loopback };
+    var server = try localhost.listen(.{
+        .reuse_address = true,
+    });
+    defer server.deinit();
 
-    // Connect to the audio stream source
-    var conn = try net.tcpConnectToHost(page_allocator, "127.0.0.1", 9001);
-    defer conn.stream.close();
+    std.debug.print("Server acceptance", .{});
 
-    std.debug.print("Connected to audio stream!\n", .{});
+    var audio_file = try std.fs.cwd().createFile("audio_output_server.wav", .{ .truncate = true });
+    defer audio.finalize_wav_header(&audio_file) catch {};
+
+    try audio.write_wav_header(&audio_file, 44100, 0);
+
+    var client = try server.accept();
+    defer client.stream.close();
 
     var audio_buffer: [44100]i16 = undefined; // 1 second buffer at 44.1kHz (16-bit PCM)
     var buffer_index: usize = 0;
 
+    const reader = client.stream.reader();
+
     while (true) {
         // Read data in chunks to fill the buffer
         var temp_buffer: [1024]u8 = undefined;
-        const bytes_read = conn.stream.read(&temp_buffer) catch |err| {
+        const bytes_read = reader.read(&temp_buffer) catch |err| {
             std.debug.print("Read error: {}\n", .{err});
             break;
         };
+
         if (bytes_read == 0) break; // Stream closed by sender
 
         // Ensure we don't overflow audio_buffer
@@ -31,11 +43,9 @@ pub fn main() !void {
             buffer_index += samples_to_store;
         }
 
-        std.debug.print("Received {} bytes, buffer index: {}\n", .{ bytes_read, buffer_index });
-
-        // If buffer is full, process audio data (e.g., write to a file, playback, etc.)
+        // If buffer is full, write to file - TODO replace with write to audio device.
         if (buffer_index >= audio_buffer.len) {
-            std.debug.print("Buffer full, processing audio...\n", .{});
+            _ = audio_file.write(std.mem.sliceAsBytes(&audio_buffer)) catch {};
             buffer_index = 0; // Reset for new data
         }
     }

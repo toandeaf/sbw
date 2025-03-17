@@ -17,10 +17,8 @@ pub fn main() anyerror!void {
     c.Init(screenWidth, screenHeight);
 
     // Audio init
-    try a.Init();
-    defer a.Deinit() catch |err| {
-        std.debug.print("Error deiniting audio: {}\n", .{err});
-    };
+    try a.init();
+    defer a.deinit();
 
     // Window init
     rl.initWindow(screenWidth, screenHeight, "SBW Zig POC");
@@ -33,7 +31,7 @@ pub fn main() anyerror!void {
 
     // Trigger this on action orrr?
     try n.Init();
-    try a.Listen();
+    try a.listen();
 
     while (!rl.windowShouldClose()) {
         rl.beginDrawing();

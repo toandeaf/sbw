@@ -7,14 +7,12 @@ const zaudio = @import("zaudio");
 const n = @import("network.zig");
 const constants = @import("constants.zig");
 
-
 var audio_buffer: [constants.BUFFER_SIZE]i16 = undefined;
 var buffer_index: usize = 0;
-var audio_file: ?std.fs.File = null;
 
 var device: *zaudio.Device = undefined; // Nullable pointer
 
-pub fn Init() anyerror!void {
+pub fn init() anyerror!void {
     const allocator = std.heap.page_allocator;
     zaudio.init(allocator);
 
@@ -24,47 +22,26 @@ pub fn Init() anyerror!void {
     config.capture.format = zaudio.Format.signed16;
     config.capture.channels = 1;
     config.sample_rate = 44100;
-    config.data_callback = audioCallback;
+    config.data_callback = audio_callback;
     config.user_data = null;
 
     device = try zaudio.Device.create(null, config);
-    try InitFile();
 }
 
-pub fn Deinit() anyerror!void {
-    if (audio_file) |*f| {
-        const file_size = try f.getEndPos();
-        try f.seekTo(4);
-
-        const block: u32 = @intCast(file_size - 8);
-        try f.writeAll(&std.mem.toBytes(block)); // RIFF chunk size
-        //
-        try f.seekTo(40);
-        const sure: u32 = @intCast(file_size - 44);
-        try f.writeAll(&std.mem.toBytes(sure)); // Data chunk size
-        f.close();
-        audio_file = null;
-    }
-
+pub fn deinit() void {
     device.destroy();
     zaudio.deinit();
 }
 
-pub fn Listen() anyerror!void {
+pub fn listen() anyerror!void {
     try device.start();
 }
 
-pub fn StopListening() void {
+pub fn stop_listening() void {
     device.stop();
 }
 
-fn InitFile() anyerror!void {
-    var f = try std.fs.cwd().createFile("audio_output.wav", .{ .truncate = true });
-    try write_wav_header(&f, 44100, 0);
-    audio_file = f;
-}
-
-fn audioCallback(
+fn audio_callback(
     _: *zaudio.Device,
     _: ?*anyopaque,
     input: ?*const anyopaque,
@@ -78,10 +55,6 @@ fn audioCallback(
             buffer_index += 1;
 
             if (buffer_index >= constants.BUFFER_SIZE) {
-                // if (audio_file) |*f| {
-                //     // Eventually gonna replace this with writing to network.
-                //     _ = f.write(std.mem.sliceAsBytes(&audio_buffer)) catch {};
-                // }
                 if (n.conn != null) {
                     n.writeToServer(audio_buffer) catch |err| {
                         std.debug.print("Error writing to server: {}\n", .{err});
@@ -94,7 +67,7 @@ fn audioCallback(
 }
 
 // Obviously I don't have a fucking clue what a WAV header is, but I found this loose structure online.
-fn write_wav_header(f: *std.fs.File, sample_rate: u32, num_samples: u32) !void {
+pub fn write_wav_header(f: *std.fs.File, sample_rate: u32, num_samples: u32) !void {
     const bits_per_sample: u16 = 16;
     const num_channels: u16 = 1;
     const byte_rate = sample_rate * num_channels * (bits_per_sample / 8);
@@ -123,4 +96,17 @@ fn write_wav_header(f: *std.fs.File, sample_rate: u32, num_samples: u32) !void {
     };
 
     try f.writeAll(&header);
+}
+
+pub fn finalize_wav_header(f: *std.fs.File) anyerror!void {
+    const file_size = try f.getEndPos();
+    try f.seekTo(4);
+
+    const block: u32 = @intCast(file_size - 8);
+    try f.writeAll(&std.mem.toBytes(block)); // RIFF chunk size
+    //
+    try f.seekTo(40);
+    const sure: u32 = @intCast(file_size - 44);
+    try f.writeAll(&std.mem.toBytes(sure)); // Data chunk size
+    f.close();
 }
