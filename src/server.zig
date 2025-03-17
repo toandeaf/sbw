@@ -1,5 +1,14 @@
 const std = @import("std");
+const zaudio = @import("zaudio");
 const audio = @import("../src/resources/audio.zig");
+
+const SAMPLE_RATE = 44100;
+const CHANNELS = 2;
+const BUFFER_SIZE = SAMPLE_RATE * CHANNELS * @sizeOf(i16);
+
+var audio_buffer: [BUFFER_SIZE]u8 = undefined;
+var buffer_index: usize = 0;
+var buffer_size: usize = 0;
 
 pub fn main() !void {
     const loopback = try std.net.Ip4Address.parse("127.0.0.1", 9001);
@@ -18,9 +27,6 @@ pub fn main() !void {
 
     var client = try server.accept();
     defer client.stream.close();
-
-    var audio_buffer: [44100]i16 = undefined; // 1 second buffer at 44.1kHz (16-bit PCM)
-    var buffer_index: usize = 0;
 
     const reader = client.stream.reader();
 
@@ -49,4 +55,22 @@ pub fn main() !void {
             buffer_index = 0; // Reset for new data
         }
     }
+}
+
+// TODO integrate this with the network call
+fn audio_callback(
+    _: *zaudio.Device,
+    output: ?*anyopaque,
+    _: ?*const anyopaque,
+    frame_count: u32,
+) callconv(.C) void {
+    if (output == null) return;
+
+    const samples: [*]i16 = @ptrCast(@alignCast(output.?));
+    const sample_count = frame_count * CHANNELS;
+    const byte_count = sample_count * @sizeOf(i16);
+
+    // Ensure we don't read out of bounds
+    const copy_size = @min(audio_buffer.len, byte_count);
+    @memcpy(samples[0..(copy_size / @sizeOf(i16))], @as([*]const i16, @ptrCast(@alignCast(&audio_buffer))));
 }
