@@ -1,10 +1,11 @@
 .{
-    .name = "sbw",
-    .version = "0.0.1",
+    .name = .sbw,
+    .fingerprint = 0x305ce2a105b7af8f,
+    .version = "0.0.2",
     .dependencies = .{
-        .@"raylib-zig" = .{
-            .url = "git+https://github.com/Not-Nik/raylib-zig?ref=devel#845af357e4bc5ed8d008a8bb64bd7c4b4906851d",
-            .hash = "122081321a9b6653f90fee325553c9f64934f94b789e7ddbadf27f754a5e42537c4d",
+        .raylib_zig = .{
+            .url = "git+https://github.com/Not-Nik/raylib-zig?ref=devel#d4fc514d54a3b37b9b3e4f4983f611c3469e8c2a",
+            .hash = "raylib_zig-5.6.0-dev-KE8REHguBQAE0xoNkra7mtEqr8cCZHk7k_03txLZB-cZ",
         },
         .zaudio = .{
             .url = "git+https://github.com/zig-gamedev/zaudio.git#a67604fdb79fb7e0b34fe074f8ffc22d268b3fb3",

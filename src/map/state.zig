@@ -3,8 +3,8 @@ const m = @import("types.zig");
 
 pub var map: m.Map = undefined;
 
-pub fn init() void {
-    const texture = rl.loadTexture("assets/map.png");
+pub fn init() anyerror!void {
+    const texture = try rl.loadTexture("assets/map.png");
 
     var outter = [_][100]m.Tile { undefined } ** 100;
 

@@ -3,9 +3,9 @@ const update = @import("update.zig").update;
 const render = @import("render.zig").render;
 const init = @import("state.zig").init;
 
-pub fn Init() MapObject {
+pub fn Init() anyerror!MapObject {
     // Initialize the player state
-    init();
+    try init();
 
     return MapObject{
         .updateFn = update,

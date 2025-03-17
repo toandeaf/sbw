@@ -27,8 +27,8 @@ pub fn main() anyerror!void {
     defer rl.closeWindow();
 
     const gameObjects = [_]g.GameObject{
-        m.Init(),
-        p.Init(),
+        try m.Init(),
+        try p.Init(),
     };
 
     // Trigger this on action orrr?

@@ -5,8 +5,8 @@ const constants = @import("constants.zig");
 
 pub var player: Player = undefined;
 
-pub fn init() void {
-    const texture = rl.loadTexture("assets/walk.png");
+pub fn init() anyerror!void {
+    const texture = try rl.loadTexture("assets/walk.png");
 
     const frameWidth = @as(f32, @floatFromInt(texture.width)) / constants.NUMBER_OF_FRAMES;
     const frameHeight = @as(f32, @floatFromInt(texture.height)) / constants.NUMBER_OF_ROWS;
