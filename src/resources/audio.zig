@@ -20,7 +20,7 @@ pub fn init() anyerror!void {
 
     config.capture.device_id = null;
     config.capture.format = zaudio.Format.signed16;
-    config.capture.channels = 1;
+    config.capture.channels = 2;
     config.sample_rate = 44100;
     config.data_callback = audio_callback;
     config.user_data = null;
@@ -47,21 +47,22 @@ fn audio_callback(
     input: ?*const anyopaque,
     frame_count: u32,
 ) callconv(.C) void {
-    if (input != null) {
-        const samples: [*]const i16 = @ptrCast(@alignCast(input.?));
+    if (input == null) return;
 
-        for (0..frame_count) |i| {
-            audio_buffer[buffer_index] = samples[i];
-            buffer_index += 1;
+    const total_samples = frame_count * constants.CHANNELS;
+    const samples: [*]const i16 = @ptrCast(@alignCast(input.?));
 
-            if (buffer_index >= constants.BUFFER_SIZE) {
-                if (n.conn != null) {
-                    n.writeToServer(audio_buffer) catch |err| {
-                        std.debug.print("Error writing to server: {}\n", .{err});
-                    };
-                }
-                buffer_index = 0; // Reset buffer
+    for (0..total_samples) |i| {
+        audio_buffer[buffer_index] = samples[i];
+        buffer_index += 1;
+
+        if (buffer_index >= constants.BUFFER_SIZE) {
+            if (n.conn != null) {
+                n.writeToServer(audio_buffer) catch |err| {
+                    std.debug.print("Error writing to server: {}\n", .{err});
+                };
             }
+            buffer_index = 0;
         }
     }
 }
